@@ -1,9 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////
+/// delete for use in shadertoy
+////////////////////////////////////////////////////////////////////////////////
+
 #version 150
 
 out vec4 fragColor;
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 uniform vec2 iResolution;
 uniform float iTime;
@@ -39,8 +40,8 @@ vec2 fixAspectRatio(in vec2 clipCoord) {
 }
 
 // Signed Distance Function
-float sphereSdf(vec3 p, vec3 center, float radius) {
-    return length(p - center) - radius;
+float sphereSdf(vec3 point, vec3 center, float radius) {
+    return length(point - center) - radius;
 }
 
 vec3 sphereNormalApproximation(vec3 p, vec3 center, float radius) {
@@ -70,7 +71,7 @@ HitInfo scene(vec3 p) {
     float hit;
     
     hit = sphereSdf(p, vec3(0.0f, 0.0f, 5.0f), 1.0f);
-    if(result.hit > sphereSdf(p, vec3(0.0f, 0.0f, 5.0f), 1.0f))
+    if(result.hit > hit)
     {
         result.hit = hit;
         result.color = vec3(1.0f, 0.0f, 0.0f);
@@ -84,22 +85,24 @@ HitInfo raycast(vec3 rayBegin, vec3 rayDir) {
     HitInfo result;
 
     float depth = 0.0f;
+    vec3 hitPos = vec3(0.0f);
     for (int i = 0; i < MAX_STEPS; ++i) {
-        result = scene(rayBegin + depth * rayDir);
+        result = scene(hitPos = rayBegin + depth * rayDir);
         if (result.hit < EPSILON) {
-            result.hitPos = rayBegin + depth * rayDir;
+            result.hit = 1.0f;
+            result.hitPos = hitPos;
             return result;
         }
         
         depth += result.hit;
     
-        if (depth >= MAX_DIST) {
-            result.hit = MAX_DIST;
+        if (depth > MAX_DIST - EPSILON) {
+            result.hit = 0.0f;
             return result;
         }
     }
     
-    result.hit = MAX_DIST;
+    result.hit = 0.0f;
     return result;
 }
 
@@ -116,10 +119,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec3 rayDir = normalize(rayTarget - rayBegin);
     
     HitInfo info = raycast(rayBegin, rayDir);
-    if(info.hit > MAX_DIST - EPSILON)
-    {
-        discard;
-    }
 
-    fragColor = vec4(lambert(info, vec3(5.0f, 0.0f, 0.0f)), 1.0f);
+    fragColor = info.hit * vec4(lambert(info, vec3(5.0f, 0.0f, 0.0f)), 1.0f);
 }
