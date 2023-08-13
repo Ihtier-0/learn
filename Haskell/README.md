@@ -1,1 +1,0 @@
-Studied Haskell using the [article](http://yannesposito.com/Scratch/en/blog/Haskell-the-Hard-Way/).
